@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Surface Outline</title>
+  <style>
+    :root {
+      --ink: #12141a;
+      --muted: #5c6573;
+      --line: #e4e7ee;
+      --paper: #ffffff;
+      --page: #f3f5f8;
+      --field: #f7f8fb;
+      --view: #17191e;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    :focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 2px;
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page);
+      font: 14px/1.45 "Segoe UI", system-ui, sans-serif;
+      display: grid;
+      grid-template-columns: 332px minmax(0, 1fr) 228px;
+      height: 100vh;
+      overflow: hidden;
+    }
+    aside {
+      min-height: 0;
+      overflow: auto;
+      padding: 22px 18px 28px;
+      background: var(--paper);
+      border-right: 1px solid var(--line);
+    }
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.04em;
+    }
+    h2 {
+      margin: 22px 0 10px;
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .lede, .hint, .meta {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    textarea, input[type="number"], input[type="search"], select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: var(--field);
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font: inherit;
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .check input { width: 16px; height: 16px; margin: 0; }
+    .row { display: flex; gap: 8px; margin-top: 12px; }
+    .row > * { flex: 1; }
+    button, .file {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+    .file input { display: none; }
+    button.primary, .file.primary {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+    button:disabled { opacity: 0.45; cursor: default; }
+    button.block { width: 100%; margin-top: 8px; }
+    .error {
+      margin: 10px 0 0;
+      color: #b42318;
+      font-size: 13px;
+    }
+    .swatches { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+    .swatch { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+    .swatch i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+    #viewport { position: relative; min-width: 0; min-height: 0; background: var(--view); }
+    canvas { display: block; width: 100%; height: 100%; outline: none; touch-action: none; }
+    #tools {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 140px;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      pointer-events: none;
+    }
+    #tools > * { pointer-events: auto; }
+    #tools button, #tools input {
+      background: #242833;
+      color: #f2f4f8;
+      border: 1px solid #3c4250;
+      border-radius: 8px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 650;
+    }
+    #tools button { padding: 7px 12px; cursor: pointer; }
+    #tools button:hover { border-color: #8b93a7; }
+    #tools button[aria-pressed="true"] {
+      background: #f2f4f8;
+      color: #12141a;
+      border-color: #f2f4f8;
+    }
+    #tools button:disabled, #tools input:disabled { opacity: 0.45; cursor: default; }
+    #tools .scale-field {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+      color: #c5cad3;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    #tools input { width: 72px; padding: 6px 8px; }
+    #tools .axis-x { color: #ef7a72; }
+    #tools .axis-y { color: #63d07a; }
+    #tools .axis-z { color: #79a8f2; }
+    #tools .axis-x input { width: 58px; border-color: #e06a62; }
+    #tools .axis-y input { width: 58px; border-color: #3cba54; }
+    #tools .axis-z input { width: 58px; border-color: #3b82f0; }
+    #tool-hint {
+      position: absolute;
+      top: 56px;
+      left: 16px;
+      right: 140px;
+      z-index: 2;
+      margin: 0;
+      color: #c5cad3;
+      font-size: 12px;
+      pointer-events: none;
+    }
+    #hud, #empty {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      margin: 0;
+      color: #c5cad3;
+      pointer-events: none;
+    }
+    #objects {
+      min-height: 0;
+      overflow: auto;
+      padding: 18px 14px 24px;
+      background: var(--paper);
+      border-left: 1px solid var(--line);
+    }
+    #objects h2 { margin-top: 4px; }
+    #object-list { display: flex; flex-direction: column; gap: 6px; }
+    #object-list button {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      width: 100%;
+      padding: 8px 10px;
+      text-align: left;
+      background: var(--field);
+      font-weight: 600;
+    }
+    #object-list button .kind {
+      font-size: 11px;
+      font-weight: 650;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    #object-list button .name {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    #object-list button[aria-current="true"] {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+    #object-list button[aria-current="true"] .kind { color: #d5dbe8; }
+    #hud { bottom: 14px; font-size: 12px; }
+    #empty {
+      top: 50%;
+      transform: translateY(-50%);
+      text-align: center;
+      font-size: 15px;
+    }
+    @media (max-width: 980px) {
+      body {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(0, 40vh) minmax(0, 1fr) 180px;
+      }
+      #controls { border-right: 0; border-bottom: 1px solid var(--line); }
+      #objects { border-left: 0; border-top: 1px solid var(--line); }
+    }
+  </style>
+</head>
+<body>
+  <aside id="controls">
+    <h1>Surface Outline</h1>
+    <p class="lede">Load an STL, then place outlined text or a filled SVG on any face. Export keeps each piece separate so the slicer can color it.</p>
+
+    <h2>Model</h2>
+    <div class="row">
+      <label class="file primary">Load STL
+        <input id="stl" type="file" accept=".stl,model/stl">
+      </label>
+      <button id="sample" type="button">Sample block</button>
+    </div>
+    <label for="up-axis">Up axis</label>
+    <select id="up-axis">
+      <option value="z" selected>Z up, same as the slicer</option>
+      <option value="y">Y up, if the model loads on its side</option>
+    </select>
+    <p class="meta" id="model-meta">No model yet. You can also drop an STL on the view.</p>
+    <button id="frame" class="block" type="button">Frame model</button>
+
+    <h2>Text and SVG</h2>
+    <p class="meta" id="selection">Nothing selected</p>
+    <label for="text">Text</label>
+    <textarea id="text" spellcheck="false">HELLO</textarea>
+    <label for="font">Font</label>
+    <select id="font">
+      <option value="bundled">Anton</option>
+    </select>
+    <input id="font-filter" type="search" placeholder="Find a font" aria-label="Find a font">
+    <label class="file">Upload TTF, OTF, or WOFF
+      <input id="font-file" type="file" accept=".ttf,.otf,.woff,font/ttf,font/otf,font/woff">
+    </label>
+    <label for="size">Size (mm)</label>
+    <input id="size" type="number" min="0.5" max="1000" step="0.5" value="16">
+    <p class="hint">Letter height for text. Longest side of the artwork for an SVG. The outline thickness stays in millimetres.</p>
+    <label for="rim">Outline (mm)</label>
+    <input id="rim" type="number" min="0" max="80" step="0.1" value="1.2">
+    <label for="corner">Corner radius (mm)</label>
+    <input id="corner" type="number" min="0" max="80" step="0.1" value="0.6">
+    <label id="raise-label" for="raise">Thickness (mm)</label>
+    <input id="raise" type="number" min="0.2" max="80" step="0.1" value="0.4">
+    <label class="check" for="flush">
+      <input id="flush" type="checkbox">
+      Flush with the surface
+    </label>
+    <p class="hint">Letters stand proud of the face by this thickness. Flush letters end level with the face, and the thickness is how far they extend into the model.</p>
+    <label for="twist">Rotation (degrees)</label>
+    <input id="twist" type="number" min="-360" max="360" step="1" value="0">
+    <label for="svg-plane">SVG plane</label>
+    <select id="svg-plane">
+      <option value="surface" selected>Object surface</option>
+      <option value="bed">Bed</option>
+    </select>
+    <p class="hint">The next SVG lands on the face in the middle of the view, or flat on the print bed. It imports as the artwork only. Set Outline above 0 while it is selected to add one.</p>
+    <div class="row">
+      <button id="add-text" class="primary" type="button" disabled>Add text</button>
+      <label class="file">Add SVG
+        <input id="svg" type="file" accept=".svg,image/svg+xml">
+      </label>
+    </div>
+    <p class="hint">Add text places another copy. Edit the words while that copy is selected. A new copy sits beside the one you had selected.</p>
+    <button id="remove" class="block" type="button" disabled>Remove selected</button>
+    <p class="error" id="error" hidden></p>
+
+    <h2>Export</h2>
+    <button id="export-3mf" class="primary block" type="button" disabled>Export for slicer</button>
+    <button id="export-stl" class="block" type="button" disabled>Export STL parts</button>
+    <div class="swatches">
+      <span class="swatch"><i style="background:#b7bcc6"></i> Model</span>
+      <span class="swatch"><i style="background:#1c1e24"></i> Letters</span>
+      <span class="swatch"><i style="background:#d24b24"></i> Outline</span>
+    </div>
+    <p class="hint">The slicer file is a 3MF. The model, the letters, and the outline are separate parts of one object, already lined up. In Creality Print, OrcaSlicer, Bambu Studio, or PrusaSlicer, open the parts and assign a filament to each one. Export STL parts if the slicer only accepts STL: import every file in the zip. They share the same position.</p>
+  </aside>
+  <div id="viewport">
+    <div id="tools">
+      <button id="undo" type="button" disabled title="Undo (Ctrl+Z)">Undo</button>
+      <button id="redo" type="button" disabled title="Redo (Ctrl+Y)">Redo</button>
+      <button id="tool-move" type="button" aria-pressed="false">Move</button>
+      <button id="tool-center" type="button" disabled>Center</button>
+      <button id="tool-face" type="button" aria-pressed="false">Lay on face</button>
+      <button id="tool-surface" type="button" aria-pressed="false">Place</button>
+      <button id="tool-scale" type="button" aria-pressed="false">Scale</button>
+      <label class="scale-field" for="scale-percent">Scale %
+        <input id="scale-percent" type="number" min="5" max="2000" step="1" value="100" disabled>
+      </label>
+      <button id="tool-rotate" type="button" aria-pressed="false">Rotate</button>
+      <label class="scale-field axis-x" for="rotate-x">X °
+        <input id="rotate-x" type="number" min="-360" max="360" step="0.1" value="0" disabled>
+      </label>
+      <label class="scale-field axis-y" for="rotate-y">Y °
+        <input id="rotate-y" type="number" min="-360" max="360" step="0.1" value="0" disabled>
+      </label>
+      <label class="scale-field axis-z" for="rotate-z">Z °
+        <input id="rotate-z" type="number" min="-360" max="360" step="0.1" value="0" disabled>
+      </label>
+    </div>
+    <p id="tool-hint">Left-drag slides text or an SVG on the face.</p>
+    <canvas id="view"></canvas>
+    <p id="empty">Load an STL, then add text or an SVG.</p>
+    <p id="hud">Scroll zooms. Right-drag turns the view. Middle-drag moves the view. Left-click selects. Click a face of the cube to look from that side.</p>
+  </div>
+  <aside id="objects">
+    <h2>Objects</h2>
+    <p class="hint">Click an object to select it.</p>
+    <div id="object-list"></div>
+  </aside>
+  <script src="vendor/clipper.js"></script>
+  <script src="vendor/opentype.min.js"></script>
+  <script src="vendor/forge.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./node_modules/three/build/three.module.js",
+        "three/addons/": "./node_modules/three/examples/jsm/",
+        "three-mesh-bvh/accelerated": "./node_modules/three-mesh-bvh/src/utils/ExtensionUtilities.js",
+        "fflate": "./node_modules/fflate/esm/browser.js"
+      }
+    }
+  </script>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

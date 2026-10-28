@@ -1,0 +1,14 @@
+{
+  "name": "surface-outline",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "sample": "node scripts/make-sample.mjs",
+    "check": "node scripts/check-export.mjs"
+  },
+  "dependencies": {
+    "fflate": "^0.8.3",
+    "three": "^0.186.1",
+    "three-mesh-bvh": "^0.9.17"
+  }
+}
