@@ -16,7 +16,6 @@ THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 
 const stlInput = document.getElementById("stl");
-const sampleButton = document.getElementById("sample");
 const upAxisEl = document.getElementById("up-axis");
 const modelMeta = document.getElementById("model-meta");
 const frameButton = document.getElementById("frame");
@@ -24,14 +23,12 @@ const selectionEl = document.getElementById("selection");
 const textEl = document.getElementById("text");
 const fontEl = document.getElementById("font");
 const fontFilterEl = document.getElementById("font-filter");
-const fontFileEl = document.getElementById("font-file");
 const sizeEl = document.getElementById("size");
 const rimEl = document.getElementById("rim");
 const cornerEl = document.getElementById("corner");
 const raiseEl = document.getElementById("raise");
 const raiseLabel = document.getElementById("raise-label");
 const flushEl = document.getElementById("flush");
-const twistEl = document.getElementById("twist");
 const toolMoveButton = document.getElementById("tool-move");
 const toolCenterButton = document.getElementById("tool-center");
 const toolFaceButton = document.getElementById("tool-face");
@@ -374,7 +371,6 @@ let appliedUp = "z";
 let decals = [];
 let selected = null;
 let currentFont = null;
-let customFont = null;
 let suppress = false;
 let rebuildTimer = 0;
 let drag = null;
@@ -627,7 +623,6 @@ function syncForm() {
     rimEl.value = String(decal.rimMm);
     cornerEl.value = String(decal.cornerMm);
     raiseEl.value = String(decal.raiseMm);
-    twistEl.value = String(decal.twist);
     flushEl.checked = !!decal.flush;
     if (decal.kind === "text") {
       textEl.value = decal.text;
@@ -768,7 +763,7 @@ function specFromForm() {
     rimMm: readNum(rimEl, 1.2, 0, 80),
     cornerMm: readNum(cornerEl, 0.6, 0, 80),
     raiseMm: readNum(raiseEl, 0.4, 0.2, 80),
-    twist: readNum(twistEl, 0, -360, 360),
+    twist: 0,
     flush: flushEl.checked,
     font: currentFont,
     fontId: fontEl.value,
@@ -859,7 +854,7 @@ function bedLift(decal) {
 
 function placeOnBed(decal) {
   decal.facing.set(0, 0, 1);
-  decal.twist = readNum(twistEl, 0, -360, 360);
+  decal.twist = 0;
   decal.attached = false;
   applyOrientation(decal);
   const lift = bedLift(decal);
@@ -894,7 +889,7 @@ function placeNew(decal) {
     return;
   }
   const hit = centerHit();
-  decal.twist = readNum(twistEl, 0, -360, 360);
+  decal.twist = 0;
   if (hit) {
     decal.facing.copy(outwardNormal(hit));
     decal.group.position.copy(hit.point);
@@ -1276,21 +1271,7 @@ function onShapeInput() {
   scheduleRebuild(decal);
 }
 
-function onTwistInput() {
-  if (suppress || historyLock) return;
-  const decal = selectedDecal();
-  if (!decal) return;
-  pushHistory();
-  decal.twist = readNum(twistEl, decal.twist, -360, 360);
-  applyOrientation(decal);
-  syncTransformFields();
-}
-
 async function ensureFont(id) {
-  if (id === "custom") {
-    currentFont = customFont;
-    return customFont;
-  }
   if (fontCache.has(id)) {
     currentFont = fontCache.get(id);
     return currentFont;
@@ -2252,16 +2233,6 @@ stlInput.addEventListener("change", function () {
   if (file) loadStlFile(file);
 });
 
-sampleButton.addEventListener("click", async function () {
-  try {
-    const response = await fetch("samples/block.stl");
-    if (!response.ok) throw new Error("The sample block is missing.");
-    loadStlBuffer(await response.arrayBuffer(), "block.stl");
-  } catch (err) {
-    showError(err.message || "Could not load the sample.");
-  }
-});
-
 upAxisEl.addEventListener("change", function () {
   const next = upAxisEl.value === "y" ? "y" : "z";
   if (!model) {
@@ -2317,7 +2288,6 @@ scalePercentEl.addEventListener("change", function () {
 [rotateXEl, rotateYEl, rotateZEl].forEach(function (input) {
   input.addEventListener("change", onRotateFieldChange);
 });
-twistEl.addEventListener("input", onTwistInput);
 
 fontEl.addEventListener("change", async function () {
   try {
@@ -2335,29 +2305,6 @@ fontFilterEl.addEventListener("input", function () {
     const matches = option.textContent.toLowerCase().includes(query);
     option.hidden = !!query && option.value !== fontEl.value && !matches;
   });
-});
-
-fontFileEl.addEventListener("change", async function () {
-  const file = fontFileEl.files && fontFileEl.files[0];
-  fontFileEl.value = "";
-  if (!file) return;
-  try {
-    customFont = opentype.parse(await file.arrayBuffer());
-    let option = fontEl.querySelector('option[value="custom"]');
-    if (!option) {
-      option = document.createElement("option");
-      option.value = "custom";
-      fontEl.prepend(option);
-    }
-    option.textContent = file.name;
-    option.hidden = false;
-    fontEl.value = "custom";
-    currentFont = customFont;
-    showError("");
-    onShapeInput();
-  } catch (err) {
-    showError("Could not read that font.");
-  }
 });
 
 window.addEventListener("keydown", function (event) {

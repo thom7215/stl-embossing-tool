@@ -244,7 +244,6 @@
       <label class="file primary">Load STL
         <input id="stl" type="file" accept=".stl,model/stl">
       </label>
-      <button id="sample" type="button">Sample block</button>
     </div>
     <label for="up-axis">Up axis</label>
     <select id="up-axis">
@@ -263,9 +262,8 @@
       <option value="bundled">Anton</option>
     </select>
     <input id="font-filter" type="search" placeholder="Find a font" aria-label="Find a font">
-    <label class="file">Upload TTF, OTF, or WOFF
-      <input id="font-file" type="file" accept=".ttf,.otf,.woff,font/ttf,font/otf,font/woff">
-    </label>
+    <button id="add-text" class="primary block" type="button" disabled>Add text</button>
+    <p class="hint">Add text places another copy. Edit the words while that copy is selected. A new copy sits beside the one you had selected.</p>
     <label for="size">Size (mm)</label>
     <input id="size" type="number" min="0.5" max="1000" step="0.5" value="16">
     <p class="hint">Letter height for text. Longest side of the artwork for an SVG. The outline thickness stays in millimetres.</p>
@@ -280,8 +278,6 @@
       Flush with the surface
     </label>
     <p class="hint">Letters stand proud of the face by this thickness. Flush letters end level with the face, and the thickness is how far they extend into the model.</p>
-    <label for="twist">Rotation (degrees)</label>
-    <input id="twist" type="number" min="-360" max="360" step="1" value="0">
     <label for="svg-plane">SVG plane</label>
     <select id="svg-plane">
       <option value="surface" selected>Object surface</option>
@@ -289,12 +285,10 @@
     </select>
     <p class="hint">The next SVG lands on the face in the middle of the view, or flat on the print bed. It imports as the artwork only. Set Outline above 0 while it is selected to add one.</p>
     <div class="row">
-      <button id="add-text" class="primary" type="button" disabled>Add text</button>
       <label class="file">Add SVG
         <input id="svg" type="file" accept=".svg,image/svg+xml">
       </label>
     </div>
-    <p class="hint">Add text places another copy. Edit the words while that copy is selected. A new copy sits beside the one you had selected.</p>
     <button id="remove" class="block" type="button" disabled>Remove selected</button>
     <p class="error" id="error" hidden></p>
 
