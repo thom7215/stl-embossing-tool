@@ -174,7 +174,7 @@ function listen(port) {
 
   server.listen(port, "127.0.0.1", function () {
     const url = "http://127.0.0.1:" + port;
-    console.log("Surface Outline is running at " + url);
+    console.log("STL Embossing Tool is running at " + url);
     console.log("Close this window to stop it.");
     if (process.env.SURFACE_OUTLINE_OPEN !== "0") {
       spawn("cmd", ["/c", "start", "", url], { detached: true, stdio: "ignore" }).unref();

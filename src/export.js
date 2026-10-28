@@ -131,7 +131,7 @@ export function build3mf(parts) {
   const model =
     '<?xml version="1.0" encoding="UTF-8"?>' +
     '<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">' +
-    '<metadata name="Application">Surface Outline</metadata>' +
+    '<metadata name="Application">STL Embossing Tool</metadata>' +
     "<resources>" + objects.join("") + "</resources>" +
     '<build><item objectid="' + buildId + '"/></build></model>';
   const contentTypes =
